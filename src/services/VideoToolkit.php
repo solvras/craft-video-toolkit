@@ -243,17 +243,12 @@ class VideoToolkit extends Component
     {
         $customClasses = $options['customClasses'] ?? null;
         $customCss = $options['customCss'] ?? null;
-        $useTailwind = $options['useTailwind'] ?? false;
         $useStyles = $options['useStyles'] ?? true; // this is default
 
         $wrapperClass = [];
         $wrapperInnerClass = [];
         $wrapperStyle = [];
         $wrapperInnerStyle = [];
-        if($useTailwind) {
-            $wrapperClass = array_merge($wrapperClass, $this->getVideoWrapperTailwind());
-            $wrapperInnerClass = array_merge($wrapperInnerClass, $this->getVideoWrapperInnerTailwind());
-        }
         if($customClasses) {
             $wrapperClass = array_merge($wrapperClass, $customClasses['wrapper']);
             $wrapperInnerClass = array_merge($wrapperInnerClass, $customClasses['wrapperInner']);
@@ -313,29 +308,6 @@ class VideoToolkit extends Component
             'left' => '0',
             'width' => '100%',
             'height' => '100%'
-        ];
-    }
-
-    // get video wrapper styling as tailwind classes
-    public function getVideoWrapperTailwind(): array
-    {
-        return [
-            'relative',
-            'pb-[56.25%]',
-            'h-0',
-            'overflow-hidden'
-        ];
-    }
-
-    // get video wrapper inner styling as tailwind classes
-    public function getVideoWrapperInnerTailwind(): array
-    {
-        return [
-            'absolute',
-            'top-0',
-            'left-0',
-            'w-full',
-            'h-full'
         ];
     }
 
