@@ -10,6 +10,8 @@ use yii\base\Component;
  */
 class VideoToolkit extends Component
 {
+    private const WIDTH = 640;
+    private const HEIGHT = 480;
     // get id from YouTube video
     public function getYoutubeId($url): string
     {
@@ -35,6 +37,19 @@ class VideoToolkit extends Component
         return '';
     }
 
+    // get vimeo private id
+    public function getVimeoPrivateId($url): string
+    {
+        $parsedUrl = parse_url($url);
+        if (isset($parsedUrl['path'])) {
+            $path = explode('/', $parsedUrl['path']);
+            if (isset($path[2])) {
+                return $path[2];
+            }
+        }
+        return '';
+    }
+
     // get youtube embed url
     public function getYoutubeEmbedUrl($url): string
     {
@@ -50,10 +65,27 @@ class VideoToolkit extends Component
     {
         $id = $this->getVimeoId($url);
         if ($id) {
-            return 'https://player.vimeo.com/video/' . $id;
+            $privateAttr = '';
+            if($privateId = $this->getVimeoPrivateId($url)) {
+                $privateAttr = "?h=" . $privateId;
+            }
+            return 'https://player.vimeo.com/video/' . $id . $privateAttr;
         }
         return '';
     }
+
+    public function getEmbedUrl($url): string
+    {
+        $kind = $this->getVideoKind($url);
+        if ($kind == 'youtube') {
+            return $this->getYoutubeEmbedUrl($url);
+        } elseif ($kind == 'vimeo') {
+            return $this->getVimeoEmbedUrl($url);
+        }
+        return '';
+    }
+
+
 
     // get youtube thumbnail url
     public function getYoutubeThumbnailUrl($url): string
@@ -76,8 +108,23 @@ class VideoToolkit extends Component
         return '';
     }
 
+    // get video thumbnail url
+    public function getVideoThumbnailUrl($url): string
+    {
+        $kind = $this->getVideoKind($url);
+        if ($kind == 'youtube') {
+            return $this->getYoutubeThumbnailUrl($url);
+        } elseif ($kind == 'vimeo') {
+            return $this->getVimeoThumbnailUrl($url);
+        }
+        return '';
+    }
+
     // get youtube embed code
-    public function getYoutubeEmbedCode($url): string
+    // @TODO add autoplay option
+    // @TODO add cookie setting
+    // @TODO add size option, either fixed or responsive
+    public function getYoutubeEmbedCode($url, $options = []): string
     {
         $id = $this->getYoutubeId($url);
         if ($id) {
@@ -87,80 +134,218 @@ class VideoToolkit extends Component
     }
 
     // get vimeo embed code
-    public function getVimeoEmbedCode($url): string
+    // @TODO add cookie setting
+    // @TODO add size option, either fixed or responsive
+    // @TODO write in documentation that videos will be muted when autoplay is true
+    public function getVimeoEmbedCode($url, $options = []): string
     {
+        $muted = $options['muted'] ?? false;
+        $autoplay = $options['autoplay'] ?? false;
+        $loop = $options['loop'] ?? false;
+        $controls = $options['controls'] ?? true;
+        $height = $options['height'] ?? self::HEIGHT;
+        $width = $options['width'] ?? self::WIDTH;
+        $responsive = $options['responsive'] ?? false;
+
+        $attrArray = [];
+        if($privateId = $this->getVimeoPrivateId($url)) {
+            $attrArray = array_merge($attrArray, ['h' => $privateId]);
+        }
+        if($muted) {
+            $attrArray = array_merge($attrArray, ['muted' =>'1']);
+        }
+        if($autoplay) {
+            $attrArray = array_merge($attrArray, ['autoplay' =>'1']);
+            $attrArray = array_merge($attrArray, ['muted' =>'1']);
+        }
+        if($loop) {
+            $attrArray = array_merge($attrArray, ['loop' =>'1']);
+        }
+        if(!$controls) {
+            $attrArray = array_merge($attrArray, ['background' =>'1']);
+        }
+
+
+        if($responsive) {
+            $attrSize = "";
+            $styleSize = "style='width:100%;height:100%;'";
+        } else {
+            $attrSize = "width='" . $width . "' height='" . $height . "'";
+            $styleSize = "";
+        }
+
         $id = $this->getVimeoId($url);
         if ($id) {
-            return '<iframe src="https://player.vimeo.com/video/' . $id . '" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+            return '<iframe src="https://player.vimeo.com/video/' . $id . '?'. http_build_query($attrArray) . '" ' . $attrSize . ' ' . $styleSize . ' frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
         }
         return '';
     }
 
-    // check if youtube or vimeo video, return kind
+    // get local video embed code
+    // @TODO check other formats than mp4
+    // @TODO write in documentation that videos will be muted when autoplay is true
+    public function getLocalVideoEmbedCode($url, $options = []): string
+    {
+        $muted = $options['muted'] ?? false;
+        $autoplay = $options['autoplay'] ?? false;
+        $loop = $options['loop'] ?? false;
+        $controls = $options['controls'] ?? true;
+        $attrArray = [];
+        if($muted) {
+            $attrArray[] = 'muted';
+        }
+        if($autoplay) {
+            $attrArray[] = 'autoplay';
+            $attrArray[] = 'muted';
+        }
+        if($loop) {
+            $attrArray[] = 'loop';
+        }
+        if($controls) {
+            $attrArray[] = 'controls';
+        }
+
+        if ($url) {
+            return '<video ' . implode('',$attrArray) . '><source src="' . $url . '" type="video/mp4"></video>';
+        }
+        return '';
+    }
+
+    // check if YouTube, vimeo video or local, return kind
     public function getVideoKind($url): string
     {
-        if (strpos($url, 'youtube') !== false) {
+        if (str_contains($url, 'youtube')) {
             return 'youtube';
-        } elseif (strpos($url, 'vimeo') !== false) {
+        } elseif (str_contains($url, 'vimeo')) {
             return 'vimeo';
+        } elseif (!str_contains($url, 'http')) {
+            return 'local';
         }
         return '';
     }
 
     // get video embed code
-    public function getVideoEmbedCode($url): string
+    public function getVideoEmbedCode($url, $options = []): string
     {
         $kind = $this->getVideoKind($url);
         if ($kind == 'youtube') {
             return $this->getYoutubeEmbedCode($url);
         } elseif ($kind == 'vimeo') {
-            return $this->getVimeoEmbedCode($url);
+            return $this->getVimeoEmbedCode($url, $options);
+        } elseif ($kind == 'local') {
+            return $this->getLocalVideoEmbedCode($url);
         }
         return '';
     }
 
     // get video embed code with responsive wrapper with correct css styles
-    public function getVideoEmbedCodeResponsive($url): string
+    public function getVideoEmbedCodeResponsive($url, $options = []): string
     {
-        $kind = $this->getVideoKind($url);
-        if ($kind == 'youtube') {
-            return '<div class="video-wrapper"><div class="video-wrapper-inner">' . $this->getYoutubeEmbedCode($url) . '</div></div>';
-        } elseif ($kind == 'vimeo') {
-            return '<div class="video-wrapper"><div class="video-wrapper-inner">' . $this->getVimeoEmbedCode($url) . '</div></div>';
+        $customClasses = $options['customClasses'] ?? null;
+        $customCss = $options['customCss'] ?? null;
+        $useTailwind = $options['useTailwind'] ?? false;
+        $useStyles = $options['useStyles'] ?? true; // this is default
+
+        $wrapperClass = [];
+        $wrapperInnerClass = [];
+        $wrapperStyle = [];
+        $wrapperInnerStyle = [];
+        if($useTailwind) {
+            $wrapperClass = array_merge($wrapperClass, $this->getVideoWrapperTailwind());
+            $wrapperInnerClass = array_merge($wrapperInnerClass, $this->getVideoWrapperInnerTailwind());
+        }
+        if($customClasses) {
+            $wrapperClass = array_merge($wrapperClass, $customClasses['wrapper']);
+            $wrapperInnerClass = array_merge($wrapperInnerClass, $customClasses['wrapperInner']);
+        }
+        if($useStyles) {
+            $wrapperStyle = array_merge($wrapperStyle, $this->getVideoWrapperCss());
+            $wrapperInnerStyle = array_merge($wrapperInnerStyle, $this->getVideoWrapperInnerCss());
+        }
+        if($customCss) {
+            $wrapperStyle = array_merge($wrapperStyle, $customCss['wrapper']);
+            $wrapperInnerStyle = array_merge($wrapperInnerStyle, $customCss['wrapperInner']);
+        }
+        $wrapperClassString = implode(' ', $wrapperClass);
+        $wrapperInnerClassString = implode(' ', $wrapperInnerClass);
+        $wrapperStyleString = $this->implodeStyles($wrapperStyle);
+        $wrapperInnerStyleString = $this->implodeStyles($wrapperInnerStyle);
+        $wrapperClassStyle = [];
+        $wrapperInnerClassStyle = [];
+        if($wrapperClassString) {
+            $wrapperClassStyle[] = 'class="' . $wrapperClassString . '"';
+        }
+        if($wrapperInnerClassString) {
+            $wrapperInnerClassStyle[] = 'class="' . $wrapperInnerClassString . '"';
+        }
+        if($wrapperStyleString) {
+            $wrapperClassStyle[] = 'style="' . $wrapperStyleString . '"';
+        }
+        if($wrapperInnerStyleString) {
+            $wrapperInnerClassStyle[] = 'style="' . $wrapperInnerStyleString . '"';
+        }
+        $options['responsive'] = true;
+        $embedCode = $this->getVideoEmbedCode($url, $options);
+        if ($embedCode) {
+            return '<div '. implode(' ', $wrapperClassStyle) .'><div '. implode(' ', $wrapperInnerClassStyle) .'>' . $embedCode . '</div></div>';
         }
         return '';
     }
 
     // get video wrapper css code for inline styling
-    public function getVideoWrapperCss(): string
+    public function getVideoWrapperCss(): array
     {
-        return '.video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            overflow: hidden;
-        }
-        .video-wrapper-inner {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }';
+        //return 'position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;';
+        return [
+            'position' => 'relative',
+            'padding-bottom' => '56.25%',
+            'height' => '0',
+            'overflow' => 'hidden',
+        ];
+    }
+
+    // get video wrapper inner css code for inline styling
+    public function getVideoWrapperInnerCss(): array
+    {
+        return [
+            'position' => 'absolute',
+            'top' => '0',
+            'left' => '0',
+            'width' => '100%',
+            'height' => '100%'
+        ];
     }
 
     // get video wrapper styling as tailwind classes
-    public function getVideoWrapperTailwind(): string
+    public function getVideoWrapperTailwind(): array
     {
-        return 'relative pb-[56.25%] h-0 overflow-hidden';
+        return [
+            'relative',
+            'pb-[56.25%]',
+            'h-0',
+            'overflow-hidden'
+        ];
     }
 
     // get video wrapper inner styling as tailwind classes
-    public function getVideoWrapperInnerTailwind(): string
+    public function getVideoWrapperInnerTailwind(): array
     {
-        return 'absolute top-0 left-0 w-full h-full';
+        return [
+            'absolute',
+            'top-0',
+            'left-0',
+            'w-full',
+            'h-full'
+        ];
     }
 
-
+    public function implodeStyles(array $styles): string
+    {
+        $styleString = '';
+        foreach($styles as $key => $value) {
+            $styleString .= $key . ':' . $value . ';';
+        }
+        return $styleString;
+    }
 
 }

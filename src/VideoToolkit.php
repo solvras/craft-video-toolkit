@@ -5,6 +5,7 @@ namespace solvras\craftvideotoolkit;
 use Craft;
 use craft\base\Plugin;
 use solvras\craftvideotoolkit\services\VideoToolkit as VideoToolkitAlias;
+use solvras\craftvideotoolkit\web\twig\Extension;
 
 /**
  * Video Toolkit plugin
@@ -32,6 +33,7 @@ class VideoToolkit extends Plugin
             $this->attachEventHandlers();
             // ...
         });
+        Craft::$app->view->registerTwigExtension(new Extension());
     }
 
     private function attachEventHandlers(): void
