@@ -20,12 +20,11 @@ class Extension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
+            new TwigFunction('videoToolkit', [$this, 'videoToolkit' ], ['is_safe' => ['html']]),
             new TwigFunction('videoEmbedUrl', [$this, 'getEmbedUrl' ]),
             new TwigFunction('videoThumbnailUrl', [$this, 'getVideoThumbnailUrl' ]),
             new TwigFunction('videoEmbedCode', [$this, 'getVideoEmbedCode' ], ['is_safe' => ['html']]),
             new TwigFunction('videoEmbedCodeResponsive', [$this, 'getVideoEmbedCodeResponsive' ], ['is_safe' => ['html']]),
-            new TwigFunction('videoToolkit', [$this, 'videoToolkit' ], ['is_safe' => ['html']]),
-
         ];
     }
 
@@ -34,22 +33,22 @@ class Extension extends AbstractExtension
         return new Markup(VideoToolkit::getInstance()->videoToolkit->videoToolkit($url, $options), 'utf-8');
     }
 
-    public function getEmbedUrl($url): string
+    public function getEmbedUrl(string $url): string
     {
         return VideoToolkit::getInstance()->videoToolkit->getEmbedUrl($url);
     }
 
-    public function getVideoThumbnailUrl($url): string
+    public function getVideoThumbnailUrl(string $url): string
     {
         return VideoToolkit::getInstance()->videoToolkit->getVideoThumbnailUrl($url);
     }
 
-    public function getVideoEmbedCode($url): string
+    public function getVideoEmbedCode(string $url): string
     {
         return new Markup(VideoToolkit::getInstance()->videoToolkit->getVideoEmbedCode($url), 'utf-8');
     }
 
-    public function getVideoEmbedCodeResponsive($url, $options): string
+    public function getVideoEmbedCodeResponsive(string $url, array $options = []): string
     {
         return new Markup(VideoToolkit::getInstance()->videoToolkit->getVideoEmbedCodeResponsive($url, $options), 'utf-8');
     }
