@@ -2,7 +2,6 @@
 
 namespace solvras\craftvideotoolkit\services;
 
-use Craft;
 use yii\base\Component;
 
 /**
@@ -12,6 +11,18 @@ class VideoToolkit extends Component
 {
     private const WIDTH = 640;
     private const HEIGHT = 360;
+
+    public function videoToolkit($url, $options = []): string
+    {
+        $responsive = $options['responsive'] ?? false;
+
+        if($responsive) {
+            return $this->getVideoEmbedCodeResponsive($url, $options);
+        } else {
+            return $this->getVideoEmbedCode($url, $options);
+        }
+    }
+
     // get id from YouTube video
     public function getYoutubeId($url): string
     {
@@ -50,6 +61,13 @@ class VideoToolkit extends Component
         return '';
     }
 
+    public function getYoutubeRatio($url): float
+    {
+        $id = $this->getYoutubeId($url);
+        $data = json_decode(file_get_contents('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' . $id . '&format=json'));
+        return $data->height / $data->width;
+    }
+
     // get vimeo video ratio
     public function getVimeoRatio($url): float
     {
@@ -65,15 +83,20 @@ class VideoToolkit extends Component
     public function getYoutubeEmbedUrl($url, $options = []): string
     {
         $id = $this->getYoutubeId($url);
+        $noCookie = $options['noCookie'] ?? false;
+        if($noCookie) {
+            $embedUrl = 'https://www.youtube-nocookie.com/embed/';
+        } else {
+            $embedUrl = 'https://www.youtube.com/embed/';
+        }
         if ($id) {
-            $params = $this->getYoutubeUrlParams($url, $options);
-            return 'https://www.youtube.com/embed/' . $id . '?' . $params;
+            $params = $this->getYoutubeUrlParams($options);
+            return $embedUrl . $id . '?' . $params;
         }
         return '';
     }
 
     //get vimeo embed url, both from public and private urls
-    // @TODO add options and create url with options
     public function getVimeoEmbedUrl($url, $options = []): string
     {
         $id = $this->getVimeoId($url);
@@ -84,18 +107,18 @@ class VideoToolkit extends Component
         return '';
     }
 
-    public function getEmbedUrl($url): string
+    public function getEmbedUrl($url, $options = []): string
     {
         $kind = $this->getVideoKind($url);
         if ($kind == 'youtube') {
-            return $this->getYoutubeEmbedUrl($url);
+            return $this->getYoutubeEmbedUrl($url, $options);
         } elseif ($kind == 'vimeo') {
-            return $this->getVimeoEmbedUrl($url);
+            return $this->getVimeoEmbedUrl($url, $options);
         }
         return '';
     }
 
-    public function getYoutubeUrlParams($url, $options = []): string
+    public function getYoutubeUrlParams($options = []): string
     {
         $muted = $options['muted'] ?? false;
         $autoplay = $options['autoplay'] ?? false;
@@ -125,9 +148,13 @@ class VideoToolkit extends Component
         $autoplay = $options['autoplay'] ?? false;
         $loop = $options['loop'] ?? false;
         $controls = $options['controls'] ?? true;
+        $noCookie = $options['noCookie'] ?? false;
         $attrArray = [];
         if($privateId = $this->getVimeoPrivateId($url)) {
             $attrArray = array_merge($attrArray, ['h' => $privateId]);
+        }
+        if($noCookie) {
+            $attrArray = array_merge($attrArray, ['dnt' =>'1']);
         }
         if($muted) {
             $attrArray = array_merge($attrArray, ['muted' =>'1']);
@@ -181,13 +208,15 @@ class VideoToolkit extends Component
     }
 
     // get youtube embed code
-    // @TODO add autoplay option
-    // @TODO add cookie setting
-    // @TODO add size option, either fixed or responsive
     public function getYoutubeEmbedCode($url, $options = []): string
     {
-        $height = $options['height'] ?? self::HEIGHT;
+        $useProviderRatio = $options['useProviderRatio'] ?? false;
         $width = $options['width'] ?? self::WIDTH;
+        if($useProviderRatio) {
+            $height = $options['height'] ?? self::WIDTH * $this->getYoutubeRatio($url);
+        } else {
+            $height = $options['height'] ?? self::HEIGHT;
+        }
         $responsive = $options['responsive'] ?? false;
 
         if($responsive) {
@@ -200,20 +229,17 @@ class VideoToolkit extends Component
 
         $url = $this->getYoutubeEmbedUrl($url, $options);
         if ($url) {
-            return '<iframe src="' . $url . '" ' . $attrSize . ' ' . $styleSize . ' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+            return '<iframe src="' . $url . '" ' . $attrSize . ' ' . $styleSize . ' allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
         }
         return '';
     }
 
     // get vimeo embed code
-    // @TODO add cookie setting
-    // @TODO add size option, either fixed or responsive
-    // @TODO write in documentation that videos will be muted when autoplay is true
     public function getVimeoEmbedCode($url, $options = []): string
     {
-        $useVimeoRatio = $options['useVimeoRatio'] ?? true;
+        $useProviderRatio = $options['useProviderRatio'] ?? false;
         $width = $options['width'] ?? self::WIDTH;
-        if($useVimeoRatio) {
+        if($useProviderRatio) {
             $height = $options['height'] ?? self::WIDTH * $this->getVimeoRatio($url);
         } else {
             $height = $options['height'] ?? self::HEIGHT;
@@ -231,16 +257,18 @@ class VideoToolkit extends Component
 
         $url = $this->getVimeoEmbedUrl($url, $options);
         if ($url) {
-            return '<iframe src="' . $url . '" ' . $attrSize . ' ' . $styleSize . ' frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+            return '<iframe src="' . $url . '" ' . $attrSize . ' ' . $styleSize . '  allow="autoplay; fullscreen" allowfullscreen></iframe>';
         }
         return '';
     }
 
     // get local video embed code
     // @TODO check other formats than mp4
-    // @TODO write in documentation that videos will be muted when autoplay is true
     public function getLocalVideoEmbedCode($url, $options = []): string
     {
+        $height = $options['height'] ?? self::HEIGHT;
+        $width = $options['width'] ?? self::WIDTH;
+        $responsive = $options['responsive'] ?? false;
         $muted = $options['muted'] ?? false;
         $autoplay = $options['autoplay'] ?? false;
         $loop = $options['loop'] ?? false;
@@ -260,8 +288,16 @@ class VideoToolkit extends Component
             $attrArray[] = 'controls';
         }
 
+        if($responsive) {
+            $attrSize = "";
+            $styleSize = "style='width:100%;height:100%;'";
+        } else {
+            $attrSize = "width='" . $width . "' height='" . $height . "'";
+            $styleSize = "";
+        }
+
         if ($url) {
-            return '<video ' . implode('',$attrArray) . '><source src="' . $url . '" type="video/mp4"></video>';
+            return '<video ' . implode(' ',$attrArray) . ' ' . $attrSize . ' ' . $styleSize . '><source src="' . $url . '" type="video/mp4"></video>';
         }
         return '';
     }
@@ -288,7 +324,7 @@ class VideoToolkit extends Component
         } elseif ($kind == 'vimeo') {
             return $this->getVimeoEmbedCode($url, $options);
         } elseif ($kind == 'local') {
-            return $this->getLocalVideoEmbedCode($url);
+            return $this->getLocalVideoEmbedCode($url, $options);
         }
         return '';
     }
