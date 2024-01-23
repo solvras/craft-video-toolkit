@@ -11,7 +11,7 @@ use yii\base\Component;
 class VideoToolkit extends Component
 {
     private const WIDTH = 640;
-    private const HEIGHT = 480;
+    private const HEIGHT = 360;
     // get id from YouTube video
     public function getYoutubeId($url): string
     {
@@ -50,26 +50,36 @@ class VideoToolkit extends Component
         return '';
     }
 
+    // get vimeo video ratio
+    public function getVimeoRatio($url): float
+    {
+        $id = $this->getVimeoId($url);
+        if ($id) {
+            $hash = unserialize(file_get_contents('https://vimeo.com/api/v2/video/' . $id . '.php'));
+            return $hash[0]['height'] / $hash[0]['width'];
+        }
+        return 0;
+    }
+
     // get youtube embed url
-    public function getYoutubeEmbedUrl($url): string
+    public function getYoutubeEmbedUrl($url, $options = []): string
     {
         $id = $this->getYoutubeId($url);
         if ($id) {
-            return 'https://www.youtube.com/embed/' . $id;
+            $params = $this->getYoutubeUrlParams($url, $options);
+            return 'https://www.youtube.com/embed/' . $id . '?' . $params;
         }
         return '';
     }
 
     //get vimeo embed url, both from public and private urls
-    public function getVimeoEmbedUrl($url): string
+    // @TODO add options and create url with options
+    public function getVimeoEmbedUrl($url, $options = []): string
     {
         $id = $this->getVimeoId($url);
         if ($id) {
-            $privateAttr = '';
-            if($privateId = $this->getVimeoPrivateId($url)) {
-                $privateAttr = "?h=" . $privateId;
-            }
-            return 'https://player.vimeo.com/video/' . $id . $privateAttr;
+            $params = $this->getVimeoUrlParams($url, $options);
+            return 'https://player.vimeo.com/video/' . $id . '?' . $params;
         }
         return '';
     }
@@ -83,6 +93,56 @@ class VideoToolkit extends Component
             return $this->getVimeoEmbedUrl($url);
         }
         return '';
+    }
+
+    public function getYoutubeUrlParams($url, $options = []): string
+    {
+        $muted = $options['muted'] ?? false;
+        $autoplay = $options['autoplay'] ?? false;
+        $loop = $options['loop'] ?? false;
+        $controls = $options['controls'] ?? true;
+        $attrArray = [];
+        if($muted) {
+            $attrArray = array_merge($attrArray, ['mute' =>'1']);
+        }
+        if($autoplay) {
+            $attrArray = array_merge($attrArray, ['autoplay' =>'1']);
+            $attrArray = array_merge($attrArray, ['mute' =>'1']);
+        }
+        if($loop) {
+            $attrArray = array_merge($attrArray, ['loop' =>'1']);
+        }
+        if(!$controls) {
+            $attrArray = array_merge($attrArray, ['controls' =>'0']);
+        }
+        $attrArray = array_merge($attrArray, ['rel' =>'0']);
+        return http_build_query($attrArray);
+    }
+
+    public function getVimeoUrlParams($url, $options = []): string
+    {
+        $muted = $options['muted'] ?? false;
+        $autoplay = $options['autoplay'] ?? false;
+        $loop = $options['loop'] ?? false;
+        $controls = $options['controls'] ?? true;
+        $attrArray = [];
+        if($privateId = $this->getVimeoPrivateId($url)) {
+            $attrArray = array_merge($attrArray, ['h' => $privateId]);
+        }
+        if($muted) {
+            $attrArray = array_merge($attrArray, ['muted' =>'1']);
+        }
+        if($autoplay) {
+            $attrArray = array_merge($attrArray, ['autoplay' =>'1']);
+            $attrArray = array_merge($attrArray, ['muted' =>'1']);
+        }
+        if($loop) {
+            $attrArray = array_merge($attrArray, ['loop' =>'1']);
+        }
+        if(!$controls) {
+            $attrArray = array_merge($attrArray, ['background' =>'1']);
+        }
+        return http_build_query($attrArray);
     }
 
 
@@ -126,9 +186,21 @@ class VideoToolkit extends Component
     // @TODO add size option, either fixed or responsive
     public function getYoutubeEmbedCode($url, $options = []): string
     {
-        $id = $this->getYoutubeId($url);
-        if ($id) {
-            return '<iframe width="560" height="315" src="https://www.youtube.com/embed/' . $id . '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+        $height = $options['height'] ?? self::HEIGHT;
+        $width = $options['width'] ?? self::WIDTH;
+        $responsive = $options['responsive'] ?? false;
+
+        if($responsive) {
+            $attrSize = "";
+            $styleSize = "style='width:100%;height:100%;'";
+        } else {
+            $attrSize = "width='" . $width . "' height='" . $height . "'";
+            $styleSize = "";
+        }
+
+        $url = $this->getYoutubeEmbedUrl($url, $options);
+        if ($url) {
+            return '<iframe src="' . $url . '" ' . $attrSize . ' ' . $styleSize . ' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
         }
         return '';
     }
@@ -139,32 +211,15 @@ class VideoToolkit extends Component
     // @TODO write in documentation that videos will be muted when autoplay is true
     public function getVimeoEmbedCode($url, $options = []): string
     {
-        $muted = $options['muted'] ?? false;
-        $autoplay = $options['autoplay'] ?? false;
-        $loop = $options['loop'] ?? false;
-        $controls = $options['controls'] ?? true;
-        $height = $options['height'] ?? self::HEIGHT;
+        $useVimeoRatio = $options['useVimeoRatio'] ?? true;
         $width = $options['width'] ?? self::WIDTH;
+        if($useVimeoRatio) {
+            $height = $options['height'] ?? self::WIDTH * $this->getVimeoRatio($url);
+        } else {
+            $height = $options['height'] ?? self::HEIGHT;
+        }
+        //$height = $options['height'] ?? self::WIDTH * $this->getVimeoRatio($url);
         $responsive = $options['responsive'] ?? false;
-
-        $attrArray = [];
-        if($privateId = $this->getVimeoPrivateId($url)) {
-            $attrArray = array_merge($attrArray, ['h' => $privateId]);
-        }
-        if($muted) {
-            $attrArray = array_merge($attrArray, ['muted' =>'1']);
-        }
-        if($autoplay) {
-            $attrArray = array_merge($attrArray, ['autoplay' =>'1']);
-            $attrArray = array_merge($attrArray, ['muted' =>'1']);
-        }
-        if($loop) {
-            $attrArray = array_merge($attrArray, ['loop' =>'1']);
-        }
-        if(!$controls) {
-            $attrArray = array_merge($attrArray, ['background' =>'1']);
-        }
-
 
         if($responsive) {
             $attrSize = "";
@@ -174,9 +229,9 @@ class VideoToolkit extends Component
             $styleSize = "";
         }
 
-        $id = $this->getVimeoId($url);
-        if ($id) {
-            return '<iframe src="https://player.vimeo.com/video/' . $id . '?'. http_build_query($attrArray) . '" ' . $attrSize . ' ' . $styleSize . ' frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+        $url = $this->getVimeoEmbedUrl($url, $options);
+        if ($url) {
+            return '<iframe src="' . $url . '" ' . $attrSize . ' ' . $styleSize . ' frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
         }
         return '';
     }
@@ -229,7 +284,7 @@ class VideoToolkit extends Component
     {
         $kind = $this->getVideoKind($url);
         if ($kind == 'youtube') {
-            return $this->getYoutubeEmbedCode($url);
+            return $this->getYoutubeEmbedCode($url, $options);
         } elseif ($kind == 'vimeo') {
             return $this->getVimeoEmbedCode($url, $options);
         } elseif ($kind == 'local') {
@@ -244,6 +299,7 @@ class VideoToolkit extends Component
         $customClasses = $options['customClasses'] ?? null;
         $customCss = $options['customCss'] ?? null;
         $useStyles = $options['useStyles'] ?? true; // this is default
+        $useVimeoRatio = $options['useVimeoRatio'] ?? true;
 
         $wrapperClass = [];
         $wrapperInnerClass = [];
@@ -256,10 +312,18 @@ class VideoToolkit extends Component
         if($useStyles) {
             $wrapperStyle = array_merge($wrapperStyle, $this->getVideoWrapperCss());
             $wrapperInnerStyle = array_merge($wrapperInnerStyle, $this->getVideoWrapperInnerCss());
+            if($this->getVideoKind($url) == 'vimeo' && $useVimeoRatio) {
+                $wrapperStyle['padding-bottom'] = $this->getVimeoRatio($url) * 100 . '%';
+            }
         }
         if($customCss) {
-            $wrapperStyle = array_merge($wrapperStyle, $customCss['wrapper']);
-            $wrapperInnerStyle = array_merge($wrapperInnerStyle, $customCss['wrapperInner']);
+            if($customCss['wrapper']) {
+                $wrapperStyle = array_merge($wrapperStyle, $customCss['wrapper']);
+            }
+            if (array_key_exists('wrapperInner', $customCss)) {
+                $wrapperInnerStyle = array_merge($wrapperInnerStyle, $customCss['wrapperInner']);
+            }
+
         }
         $wrapperClassString = implode(' ', $wrapperClass);
         $wrapperInnerClassString = implode(' ', $wrapperInnerClass);
