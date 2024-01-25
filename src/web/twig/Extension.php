@@ -4,7 +4,7 @@ namespace solvras\craftvideotoolkit\web\twig;
 
 use Craft;
 use craft\elements\Asset;
-use spicyweb\embeddedassets\models\EmbeddedAsset;
+use solvras\craftvideotoolkit\video\Video;
 use solvras\craftvideotoolkit\VideoToolkit;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
@@ -21,36 +21,20 @@ class Extension extends AbstractExtension
     {
         return [
             new TwigFunction('videoToolkit', [$this, 'videoToolkit' ], ['is_safe' => ['html']]),
-            new TwigFunction('videoEmbedUrl', [$this, 'getEmbedUrl' ]),
-            new TwigFunction('videoThumbnailUrl', [$this, 'getVideoThumbnailUrl' ]),
-            new TwigFunction('videoEmbedCode', [$this, 'getVideoEmbedCode' ], ['is_safe' => ['html']]),
-            new TwigFunction('videoEmbedCodeResponsive', [$this, 'getVideoEmbedCodeResponsive' ], ['is_safe' => ['html']]),
         ];
     }
 
-    public function videoToolkit(string $url, array $options = []): string
+    public function videoToolkit(string $url, array $options = []): Video|string
     {
-        return new Markup(VideoToolkit::getInstance()->videoToolkit->videoToolkit($url, $options), 'utf-8');
-    }
-
-    public function getEmbedUrl(string $url): string
-    {
-        return VideoToolkit::getInstance()->videoToolkit->getEmbedUrl($url);
-    }
-
-    public function getVideoThumbnailUrl(string $url): string
-    {
-        return VideoToolkit::getInstance()->videoToolkit->getVideoThumbnailUrl($url);
-    }
-
-    public function getVideoEmbedCode(string $url): string
-    {
-        return new Markup(VideoToolkit::getInstance()->videoToolkit->getVideoEmbedCode($url), 'utf-8');
-    }
-
-    public function getVideoEmbedCodeResponsive(string $url, array $options = []): string
-    {
-        return new Markup(VideoToolkit::getInstance()->videoToolkit->getVideoEmbedCodeResponsive($url, $options), 'utf-8');
+        $return = $options['return'] ?? 'video';
+        $video = VideoToolkit::getInstance()->videoToolkit->videoToolkit($url, $options);
+        return match ($return) {
+            'video' => new Markup($video, 'utf-8'),
+            'thumbnail' => new Markup($video->thumbnail(), 'utf-8'),
+            'thumbnailUrl' => $video->getThumbnailUrl(),
+            'embedUrl' => $video->getEmbedUrl(),
+            default => false,
+        };
     }
 
 }
