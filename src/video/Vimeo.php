@@ -16,7 +16,7 @@ class Vimeo extends Video
         $this->setPrivateId($this->getVimeoPrivateId());
         $this->setRatio($this->calculateRatio());
         $this->setThumbnailUrl($this->getVimeoThumbnailUrl());
-        $this->setEmbedUrl($this->getEmbedUrl());
+        $this->setEmbedUrl($this->generateEmbedUrl());
         $this->setEmbedCode($this->getVideoEmbedCode());
     }
 
@@ -37,7 +37,7 @@ class Vimeo extends Video
         return false;
     }
 
-    public function getEmbedUrl(): string
+    public function generateEmbedUrl(): string // @TODO this is using default getter method, should we use a custom method?
     {
         if ($this->getId()) {
             $params = $this->getUrlParams();

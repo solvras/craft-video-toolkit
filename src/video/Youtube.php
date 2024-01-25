@@ -12,7 +12,7 @@ class Youtube extends Video
         $this->setId($this->getYoutubeId());
         $this->setRatio($this->calculateRatio());
         $this->setThumbnailUrl($this->getYoutubeThumbnailUrl());
-        $this->setEmbedUrl($this->getEmbedUrl());
+        $this->setEmbedUrl($this->generateEmbedUrl());
         $this->setEmbedCode($this->getVideoEmbedCode());
     }
 
@@ -26,10 +26,8 @@ class Youtube extends Video
         return false;
     }
 
-    public function getEmbedUrl(): string
+    public function generateEmbedUrl(): string // @TODO this is using default getter method, should we use a custom method?
     {
-
-
         if($this->getNoCookie()) {
             $embedUrl = 'https://www.youtube-nocookie.com/embed/';
         } else {
