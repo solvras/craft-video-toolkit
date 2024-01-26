@@ -11,7 +11,9 @@ class Youtube extends Video
         $this->setOembedData($this->getProviderData());
         $this->setId($this->getYoutubeId());
         $this->setRatio($this->calculateRatio());
-        $this->setThumbnailUrl($this->getYoutubeThumbnailUrl());
+        if(!$this->getThumbnailUrl()) {
+            $this->setThumbnailUrl($this->getYoutubeThumbnailUrl());
+        }
         $this->setEmbedUrl($this->generateEmbedUrl());
         $this->setEmbedCode($this->getVideoEmbedCode());
     }

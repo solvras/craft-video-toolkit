@@ -21,6 +21,7 @@ class Video
     private bool $controls;
     private bool $noCookie;
     private bool $responsive;
+    private bool $poster;
     private bool $useProviderRatio;
     private bool $useStyles;
     private array $customClasses;
@@ -145,6 +146,41 @@ class Video
         return '';
     }
 
+    public function getVideoTag(): string
+    {
+        $attrArray = [];
+        if ($this->getMuted()) {
+            $attrArray[] = 'muted';
+        }
+        if ($this->getAutoplay()) {
+            $attrArray[] = 'autoplay';
+            $attrArray[] = 'muted';
+        }
+        if ($this->getLoop()) {
+            $attrArray[] = 'loop';
+        }
+        if ($this->getControls()) {
+            $attrArray[] = 'controls';
+        }
+
+        if ($this->getPoster()) {
+            $attrArray[] = 'poster="' . $this->getThumbnailUrl() . '"';
+        }
+
+        if ($this->getResponsive()) {
+            $attrSize = "";
+            $styleSize = "style='width:100%;height:100%;'";
+        } else {
+            $attrSize = "width='" . $this->getWidth() . "' height='" . $this->getHeight() . "'";
+            $styleSize = "";
+        }
+
+        if ($this->getUrl()) {
+            return '<video ' . implode(' ', $attrArray) . ' ' . $attrSize . ' ' . $styleSize . '><source src="' . $this->getUrl() . '" type="video/mp4"></video>';
+        }
+        return '';
+    }
+
     private function getResponsiveEmbedCode(): string
     {
         $wrapperClass = [];
@@ -207,24 +243,28 @@ class Video
         $controls = $options['controls'] ?? true;
         $noCookie = $options['noCookie'] ?? false;
         $responsive = $options['responsive'] ?? false;
+        $poster = $options['poster'] ?? false;
         $useProviderRatio = $options['useProviderRatio'] ?? false;
         $useStyles = $options['useStyles'] ?? true;
         $customClasses = $options['customClasses'] ?? [];
         $customCss = $options['customCss'] ?? [];
         $width = $options['width'] ?? self::WIDTH;
         $height = $options['height'] ?? self::HEIGHT;
+        $thumbnailUrl = $options['thumbnailUrl'] ?? '';
         $this->setAutoplay($autoplay);
         $this->setMuted($muted);
         $this->setLoop($loop);
         $this->setControls($controls);
         $this->setNoCookie($noCookie);
         $this->setResponsive($responsive);
+        $this->setPoster($poster);
         $this->setUseProviderRatio($useProviderRatio);
         $this->setUseStyles($useStyles);
         $this->setCustomClasses($customClasses);
         $this->setCustomCss($customCss);
         $this->setWidth($width);
         $this->setHeight($height);
+        $this->setThumbnailUrl($thumbnailUrl);
     }
 
     /**
@@ -337,6 +377,11 @@ class Video
         $this->responsive = $responsive;
     }
 
+    public function setPoster(bool $poster): void
+    {
+        $this->poster = $poster;
+    }
+
     public function setUseProviderRatio(bool $useProviderRatio): void
     {
         $this->useProviderRatio = $useProviderRatio;
@@ -446,6 +491,11 @@ class Video
     public function getResponsive(): bool
     {
         return $this->responsive;
+    }
+
+    public function getPoster(): bool
+    {
+        return $this->poster;
     }
 
     public function getUseProviderRatio(): bool

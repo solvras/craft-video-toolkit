@@ -24,16 +24,15 @@ class Extension extends AbstractExtension
         ];
     }
 
-    public function videoToolkit(string $url, array $options = []): Video|string
+    public function videoToolkit(Asset|string $url, array $options = []): Video|string
     {
-        $return = $options['return'] ?? 'video';
+        $return = $options['return'] ?? 'video'; // video is default
         $video = VideoToolkit::getInstance()->videoToolkit->videoToolkit($url, $options);
         return match ($return) {
             'video' => new Markup($video, 'utf-8'),
+            'videoUrl' => $video->getEmbedUrl(),default => false,
             'thumbnail' => new Markup($video->thumbnail(), 'utf-8'),
             'thumbnailUrl' => $video->getThumbnailUrl(),
-            'embedUrl' => $video->getEmbedUrl(),
-            default => false,
         };
     }
 

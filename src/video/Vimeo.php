@@ -15,7 +15,9 @@ class Vimeo extends Video
         $this->setId($this->getVimeoId());
         $this->setPrivateId($this->getVimeoPrivateId());
         $this->setRatio($this->calculateRatio());
-        $this->setThumbnailUrl($this->getVimeoThumbnailUrl());
+        if(!$this->getThumbnailUrl()) {
+            $this->setThumbnailUrl($this->getVimeoThumbnailUrl());
+        }
         $this->setEmbedUrl($this->generateEmbedUrl());
         $this->setEmbedCode($this->getVideoEmbedCode());
     }

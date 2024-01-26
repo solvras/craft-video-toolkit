@@ -3,6 +3,10 @@
 namespace solvras\craftvideotoolkit\services;
 
 use Craft;
+use craft\elements\Asset;
+use solvras\craftvideotoolkit\video\AssetVideo;
+use solvras\craftvideotoolkit\video\LocalPath;
+use solvras\craftvideotoolkit\video\UrlVideo;
 use solvras\craftvideotoolkit\video\Video;
 use solvras\craftvideotoolkit\video\Vimeo;
 use solvras\craftvideotoolkit\video\Youtube;
@@ -29,8 +33,14 @@ class VideoToolkit extends Component
             case 'vimeo':
                 $video = new Vimeo($url, $options);
                 break;
-            case 'local':
-                //echo 'local';
+            case 'localAsset':
+                $video = new AssetVideo($url, $options);
+                break;
+            case 'localUrl':
+                $video = new UrlVideo($url, $options);
+                break;
+            case 'localPath':
+                $video = new LocalPath($url, $options);
                 break;
             default:
                 //echo 'no video';
@@ -50,84 +60,23 @@ class VideoToolkit extends Component
         return filter_var($url, FILTER_VALIDATE_URL);
     }
 
-
-    // get youtube thumbnail url
-
-
-    // get video thumbnail url
-    public function getVideoThumbnailUrl($url): string
-    {
-        $video = null;
-        switch ($this->getVideoKind($url)) {
-            case 'youtube':
-                $video = new Youtube($url);
-                break;
-            case 'vimeo':
-                $video = new Vimeo($url);
-                break;
-            case 'local':
-                //echo 'local';
-                break;
-            default:
-                //echo 'no video';
-                break;
-        }
-        if ($video instanceof Video) {
-            return $video->getThumbnailUrl();
-        }
-        return '';
-    }
-
-    // get local video embed code
-    // @TODO check other formats than mp4
-    public function getLocalVideoEmbedCode($url, $options = []): string
-    {
-        $height = $options['height'] ?? self::HEIGHT;
-        $width = $options['width'] ?? self::WIDTH;
-        $responsive = $options['responsive'] ?? false;
-        $muted = $options['muted'] ?? false;
-        $autoplay = $options['autoplay'] ?? false;
-        $loop = $options['loop'] ?? false;
-        $controls = $options['controls'] ?? true;
-        $attrArray = [];
-        if ($muted) {
-            $attrArray[] = 'muted';
-        }
-        if ($autoplay) {
-            $attrArray[] = 'autoplay';
-            $attrArray[] = 'muted';
-        }
-        if ($loop) {
-            $attrArray[] = 'loop';
-        }
-        if ($controls) {
-            $attrArray[] = 'controls';
-        }
-
-        if ($responsive) {
-            $attrSize = "";
-            $styleSize = "style='width:100%;height:100%;'";
-        } else {
-            $attrSize = "width='" . $width . "' height='" . $height . "'";
-            $styleSize = "";
-        }
-
-        if ($url) {
-            return '<video ' . implode(' ', $attrArray) . ' ' . $attrSize . ' ' . $styleSize . '><source src="' . $url . '" type="video/mp4"></video>';
-        }
-        return '';
-    }
-
     // check if YouTube, vimeo video or local, return kind
-    public function getVideoKind($url): string
+    public function getVideoKind(Asset|string $url): string
     {
-        if (str_contains($url, 'youtu')) {
-            return 'youtube';
-        } elseif (str_contains($url, 'vimeo')) {
-            return 'vimeo';
+        if ($url instanceof Asset) {
+            return 'localAsset';
+        }elseif ($this->isUrl($url)) {
+            if (str_contains($url, 'youtu')) {
+                return 'youtube';
+            } elseif (str_contains($url, 'vimeo')) {
+                return 'vimeo';
+            } else {
+                return 'localUrl';
+            }
         } elseif (!str_contains($url, 'http')) {
-            return 'local';
+            return 'localPath';
         }
+
         return '';
     }
 }
