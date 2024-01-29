@@ -14,12 +14,8 @@ use yii\base\Component;
 
 /**
  * Video Toolkit service
- * @TODO clean up code, move methods to represent the different kinds of videos and helper functions
- * @TODO refactor options to be a params in the class instead of a parameter in each method
- * @TODO better checks for video urls, maybe use oembed
- * @TODO if we use oembed, can we get more information to use in the embed code?
- * @TODO if we use oembed, can we easily add support for more video services?
- * @TODO add cache support if using oembed to avoid too many requests
+ * @TODO add plugin settings for standard settings
+ *
  */
 class VideoToolkit extends Component
 {

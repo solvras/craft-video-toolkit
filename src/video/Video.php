@@ -49,33 +49,44 @@ class Video
     }
 
     // helpers
-    public function getProviderData()
+    public function getProviderData(): \stdClass|false
     {
+        $cacheSettings = $this->getCacheSettings();
         if($this->isUrl($this->url)) {
-            $cache = Craft::$app->getCache(); // @TODO add use cache to plugin settings
-            $cacheKey = 'videoToolkit-' . $this->url; // @TODO add cache key to plugin settings
-            $cacheDuration = 60 * 60 * 24 * 30; // 30 days // @TODO add cache duration to plugin settings
-            $oembed = $cache->get($cacheKey);
-            if ($oembed === false) {
-                if ($oembedUrl = $this->getProviderOembedUrl()) {
-                    $oembedUrl .= $this->url;
-                    $oembed = json_decode(file_get_contents($oembedUrl));
-                    $cache->set($cacheKey, $oembed, $cacheDuration);
-                    return $oembed;
+            if($cacheSettings['cacheEnabled']) {
+                $cache = Craft::$app->getCache();
+                $cacheKey = $cacheSettings['cachePrefix'] . '-' . $this->url;
+                $cacheDuration = $cacheSettings['cacheDuration'];
+                $oembed = $cache->get($cacheKey);
+                if ($oembed === false) {
+                    if ($oembed = $this->getOembedDataFromProvider()) {
+                        $cache->set($cacheKey, $oembed, $cacheDuration);
+                        return $oembed;
+                    } else {
+                        return false;
+                    }
                 } else {
-                    return false;
+                    return $oembed;
                 }
             } else {
-                return $oembed;
+                return $this->getOembedDataFromProvider();
             }
-
         } else {
             // local file
             return false;
         }
     }
 
-    public function isUrl($url): bool
+    public function getOembedDataFromProvider(): \stdClass|false
+    {
+        if ($oembedUrl = $this->getProviderOembedUrl()) {
+            $oembedUrl .= $this->url;
+            return json_decode(file_get_contents($oembedUrl));
+        }
+        return false;
+    }
+
+    public function isUrl(string $url): bool
     {
         return filter_var($url, FILTER_VALIDATE_URL);
     }
@@ -83,19 +94,6 @@ class Video
     private function getProviderOembedUrl(): string
     {
         return $this->providerOembedUrls[$this->kind] ?? '';
-    }
-
-
-    public static function getVideoKind($url): string
-    {
-        if (str_contains($url, 'youtu')) {
-            return 'youtube';
-        } elseif (str_contains($url, 'vimeo')) {
-            return 'vimeo';
-        } elseif (!str_contains($url, 'http')) {
-            return 'local';
-        }
-        return '';
     }
 
     public function html(): string
@@ -265,6 +263,18 @@ class Video
         $this->setWidth($width);
         $this->setHeight($height);
         $this->setThumbnailUrl($thumbnailUrl);
+    }
+
+    public function getCacheSettings(): array
+    {
+        $config = Craft::$app->config->getConfigFromFile('video-toolkit');
+        $cacheConfig = $config['cache'] ?? [];
+
+        return [
+            'cacheEnabled' => $cacheConfig['enabled'] ?? true,
+            'cacheDuration' => $cacheConfig['duration'] ?? 3600,
+            'cachePrefix' => $cacheConfig['prefix'] ?? 'video-toolkit',
+        ];
     }
 
     /**
