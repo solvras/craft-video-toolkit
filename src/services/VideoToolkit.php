@@ -2,97 +2,76 @@
 
 namespace solvras\craftvideotoolkit\services;
 
-use Craft;
+use craft\elements\Asset;
+use solvras\craftvideotoolkit\video\AssetVideo;
+use solvras\craftvideotoolkit\video\LocalPath;
+use solvras\craftvideotoolkit\video\UrlVideo;
+use solvras\craftvideotoolkit\video\Video;
+use solvras\craftvideotoolkit\video\Vimeo;
+use solvras\craftvideotoolkit\video\Youtube;
 use yii\base\Component;
 
 /**
  * Video Toolkit service
+ * @TODO add plugin settings for standard settings
+ *
  */
 class VideoToolkit extends Component
 {
-    // get id from youtube video
-    public function getYoutubeId($url): string
+    public function videoToolkit($url, $options = []): Video|string
     {
-        $parsedUrl = parse_url($url);
-        if (isset($parsedUrl['query'])) {
-            parse_str($parsedUrl['query'], $query);
-            if (isset($query['v'])) {
-                return $query['v'];
+        $video = null;
+        switch ($this->getVideoKind($url)) {
+            case 'youtube':
+                $video = new Youtube($url, $options);
+                break;
+            case 'vimeo':
+                $video = new Vimeo($url, $options);
+                break;
+            case 'localAsset':
+                $video = new AssetVideo($url, $options);
+                break;
+            case 'localUrl':
+                $video = new UrlVideo($url, $options);
+                break;
+            case 'localPath':
+                $video = new LocalPath($url, $options);
+                break;
+            default:
+                //echo 'no video';
+                break;
+        }
+        if ($video instanceof Video) {
+            return $video;
+        }
+
+
+        return '';
+    }
+
+    // check if url is url or local file path, return bool
+    public function isUrl($url): bool
+    {
+        return filter_var($url, FILTER_VALIDATE_URL);
+    }
+
+    // check if YouTube, vimeo video or local, return kind
+    public function getVideoKind(Asset|string $url): string
+    {
+        if ($url instanceof Asset) {
+            return 'localAsset';
+        } elseif ($this->isUrl($url)) {
+            if (str_contains($url, 'youtu')) {
+                return 'youtube';
+            } elseif (str_contains($url, 'vimeo')) {
+                return 'vimeo';
+            } else {
+                return 'localUrl';
             }
+        } elseif (!str_contains($url, 'http')) {
+            return 'localPath';
         }
-        return '';
-    }
 
-    public function getVimeoId($url): string
-    {
-        $parsedUrl = parse_url($url);
-        if (isset($parsedUrl['path'])) {
-            $path = explode('/', $parsedUrl['path']);
-            if (isset($path[1])) {
-                return $path[1];
-            }
-        }
-        return '';
-    }
-
-    // get youtube embed url
-    public function getYoutubeEmbedUrl($url): string
-    {
-        $id = $this->getYoutubeId($url);
-        if ($id) {
-            return 'https://www.youtube.com/embed/' . $id;
-        }
-        return '';
-    }
-
-    //get vimeo embed url, both from public and private urls
-    public function getVimeoEmbedUrl($url): string
-    {
-        $id = $this->getVimeoId($url);
-        if ($id) {
-            return 'https://player.vimeo.com/video/' . $id;
-        }
-        return '';
-    }
-
-    // get youtube thumbnail url
-    public function getYoutubeThumbnailUrl($url): string
-    {
-        $id = $this->getYoutubeId($url);
-        if ($id) {
-            return 'https://img.youtube.com/vi/' . $id . '/maxresdefault.jpg';
-        }
-        return '';
-    }
-
-    // get vimeo thumbnail url
-    public function getVimeoThumbnailUrl($url): string
-    {
-        $id = $this->getVimeoId($url);
-        if ($id) {
-            $hash = unserialize(file_get_contents('https://vimeo.com/api/v2/video/' . $id . '.php'));
-            return $hash[0]['thumbnail_large'];
-        }
-        return '';
-    }
-
-    // get youtube embed code
-    public function getYoutubeEmbedCode($url): string
-    {
-        $id = $this->getYoutubeId($url);
-        if ($id) {
-            return '<iframe width="560" height="315" src="https://www.youtube.com/embed/' . $id . '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-        }
-        return '';
-    }
-
-    // get vimeo embed code
-    public function getVimeoEmbedCode($url): string
-    {
-        $id = $this->getVimeoId($url);
-        if ($id) {
-            return '<iframe src="https://player.vimeo.com/video/' . $id . '" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-        }
         return '';
     }
 }

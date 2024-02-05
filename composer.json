@@ -1,6 +1,6 @@
 {
     "name": "solvras/craft-video-toolkit",
-    "description": "Twig functions to embed video",
+    "description": "Embed videos easy in Twig",
     "type": "craft-plugin",
     "license": "proprietary",
     "support": {
@@ -22,7 +22,7 @@
     "extra": {
         "handle": "video-toolkit",
         "name": "Video Toolkit",
-        "developer": "Solvras",
+        "developer": "Solvr",
         "documentationUrl": "",
         "class": "solvras\\craftvideotoolkit\\VideoToolkit"
     },
@@ -42,4 +42,3 @@
         }
     }
 }
-
