@@ -2,8 +2,6 @@
 
 namespace solvras\craftvideotoolkit\video;
 
-use solvras\craftvideotoolkit\video\Video;
-
 class Vimeo extends Video
 {
     protected string|false $privateId;
@@ -15,7 +13,7 @@ class Vimeo extends Video
         $this->setId($this->getVimeoId());
         $this->setPrivateId($this->getVimeoPrivateId());
         $this->setRatio($this->calculateRatio());
-        if(!$this->getThumbnailUrl()) {
+        if (!$this->getThumbnailUrl()) {
             $this->setThumbnailUrl($this->getVimeoThumbnailUrl());
         }
         $this->setEmbedUrl($this->generateEmbedUrl());
@@ -32,7 +30,7 @@ class Vimeo extends Video
         $uri = $this->getOembedData()->uri;
         $idString = explode('/', $uri)[2];
         $idArray = explode(":",$idString);
-        if(count($idArray) > 1) {
+        if (count($idArray) > 1) {
             return $idArray[1];
         }
         //return explode(":",explode('/', $uri)[1])[1];
@@ -51,24 +49,24 @@ class Vimeo extends Video
     public function getUrlParams(): string
     {
         $paramsArray = [];
-        if($this->getVimeoPrivateId()) {
+        if ($this->getVimeoPrivateId()) {
             $paramsArray = array_merge($paramsArray, ['h' => $this->getVimeoPrivateId()]);
         }
-        if($this->getNoCookie()) {
-            $paramsArray = array_merge($paramsArray, ['dnt' =>'1']);
+        if ($this->getNoCookie()) {
+            $paramsArray = array_merge($paramsArray, ['dnt' => '1']);
         }
-        if($this->getMuted()) {
-            $paramsArray = array_merge($paramsArray, ['muted' =>'1']);
+        if ($this->getMuted()) {
+            $paramsArray = array_merge($paramsArray, ['muted' => '1']);
         }
-        if($this->getAutoplay()) {
-            $paramsArray = array_merge($paramsArray, ['autoplay' =>'1']);
-            $paramsArray = array_merge($paramsArray, ['muted' =>'1']);
+        if ($this->getAutoplay()) {
+            $paramsArray = array_merge($paramsArray, ['autoplay' => '1']);
+            $paramsArray = array_merge($paramsArray, ['muted' => '1']);
         }
-        if($this->getLoop()) {
-            $paramsArray = array_merge($paramsArray, ['loop' =>'1']);
+        if ($this->getLoop()) {
+            $paramsArray = array_merge($paramsArray, ['loop' => '1']);
         }
-        if(!$this->getControls()) {
-            $paramsArray = array_merge($paramsArray, ['background' =>'1']);
+        if (!$this->getControls()) {
+            $paramsArray = array_merge($paramsArray, ['background' => '1']);
         }
         return http_build_query($paramsArray);
     }
@@ -87,6 +85,4 @@ class Vimeo extends Video
     {
         $this->privateId = $privateId;
     }
-
-
 }

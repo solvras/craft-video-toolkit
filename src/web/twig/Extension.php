@@ -2,15 +2,12 @@
 
 namespace solvras\craftvideotoolkit\web\twig;
 
-use Craft;
 use craft\elements\Asset;
 use solvras\craftvideotoolkit\video\Video;
 use solvras\craftvideotoolkit\VideoToolkit;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
-use Twig\TwigFilter;
 use Twig\TwigFunction;
-use Twig\TwigTest;
 
 /**
  * Twig extension
@@ -35,5 +32,4 @@ class Extension extends AbstractExtension
             'thumbnailUrl' => $video->getThumbnailUrl(),
         };
     }
-
 }

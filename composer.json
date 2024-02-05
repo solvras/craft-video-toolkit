@@ -22,7 +22,7 @@
     "extra": {
         "handle": "video-toolkit",
         "name": "Video Toolkit",
-        "developer": "Solvras",
+        "developer": "Solvr",
         "documentationUrl": "",
         "class": "solvras\\craftvideotoolkit\\VideoToolkit"
     },

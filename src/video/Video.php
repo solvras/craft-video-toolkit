@@ -52,8 +52,8 @@ class Video
     public function getProviderData(): \stdClass|false
     {
         $cacheSettings = $this->getCacheSettings();
-        if($this->isUrl($this->url)) {
-            if($cacheSettings['cacheEnabled']) {
+        if ($this->isUrl($this->url)) {
+            if ($cacheSettings['cacheEnabled']) {
                 $cache = Craft::$app->getCache();
                 $cacheKey = $cacheSettings['cachePrefix'] . '-' . $this->url;
                 $cacheDuration = $cacheSettings['cacheDuration'];
@@ -98,7 +98,7 @@ class Video
 
     public function html(): string
     {
-        if($this->getResponsive() && $this->getEmbedCode()) {
+        if ($this->getResponsive() && $this->getEmbedCode()) {
             return $this->getResponsiveEmbedCode();
         } else {
             return $this->getEmbedCode();
@@ -107,7 +107,7 @@ class Video
 
     public function thumbnail(): string
     {
-        if($this->getThumbnailUrl()) {
+        if ($this->getThumbnailUrl()) {
             return new Markup('<img src="' . $this->getThumbnailUrl() . '" alt="" />', 'utf-8');
             //return '<img src="' . $this->getThumbnailUrl() . '" alt="" />';
         }
@@ -117,14 +117,14 @@ class Video
     public function getVideoEmbedCode(): string
     {
         $width = $this->getWidth();
-        if($this->getUseProviderRatio()) {
+        if ($this->getUseProviderRatio()) {
             $height = $this->getWidth() * $this->getRatio();
         } else {
             $height = $this->getHeight();
         }
 
         $style = [];
-        if($this->getResponsive()) {
+        if ($this->getResponsive()) {
             $attrSize = "";
             $style = array_merge($style, ['width' => '100%', 'height' => '100%', 'border' => '0']);
         } else {
@@ -132,7 +132,7 @@ class Video
             $style = array_merge($style, ['border' => '0']);
         }
         $customCss = $this->getCustomCss();
-        if(array_key_exists('iframe', $customCss)) {
+        if (array_key_exists('iframe', $customCss)) {
             $style = array_merge($style, $customCss['iframe']);
         }
 
@@ -188,25 +188,24 @@ class Video
 
         $customClasses = $this->getCustomClasses();
         $customCss = $this->getCustomCss();
-        if(count($customClasses) > 0) {
+        if (count($customClasses) > 0) {
             $wrapperClass = array_merge($wrapperClass, $customClasses['wrapper']);
             $wrapperInnerClass = array_merge($wrapperInnerClass, $customClasses['wrapperInner']);
         }
-        if($this->getUseStyles()) {
+        if ($this->getUseStyles()) {
             $wrapperStyle = array_merge($wrapperStyle, $this->getVideoWrapperCss());
             $wrapperInnerStyle = array_merge($wrapperInnerStyle, $this->getVideoWrapperInnerCss());
-            if($this->getRatio()) {
+            if ($this->getRatio()) {
                 $wrapperStyle['padding-bottom'] = $this->getRatio() * 100 . '%';
             }
         }
-        if($customCss) {
-            if($customCss['wrapper']) {
+        if ($customCss) {
+            if ($customCss['wrapper']) {
                 $wrapperStyle = array_merge($wrapperStyle, $customCss['wrapper']);
             }
             if (array_key_exists('wrapperInner', $customCss)) {
                 $wrapperInnerStyle = array_merge($wrapperInnerStyle, $customCss['wrapperInner']);
             }
-
         }
         $wrapperClassString = implode(' ', $wrapperClass);
         $wrapperInnerClassString = implode(' ', $wrapperInnerClass);
@@ -214,21 +213,21 @@ class Video
         $wrapperInnerStyleString = $this->implodeStyles($wrapperInnerStyle);
         $wrapperClassStyle = [];
         $wrapperInnerClassStyle = [];
-        if($wrapperClassString) {
+        if ($wrapperClassString) {
             $wrapperClassStyle[] = 'class="' . $wrapperClassString . '"';
         }
-        if($wrapperInnerClassString) {
+        if ($wrapperInnerClassString) {
             $wrapperInnerClassStyle[] = 'class="' . $wrapperInnerClassString . '"';
         }
-        if($wrapperStyleString) {
+        if ($wrapperStyleString) {
             $wrapperClassStyle[] = 'style="' . $wrapperStyleString . '"';
         }
-        if($wrapperInnerStyleString) {
+        if ($wrapperInnerStyleString) {
             $wrapperInnerClassStyle[] = 'style="' . $wrapperInnerStyleString . '"';
         }
         $embedCode = $this->getEmbedCode();
         if ($embedCode) {
-            return '<div '. implode(' ', $wrapperClassStyle) .'><div '. implode(' ', $wrapperInnerClassStyle) .'>' . $embedCode . '</div></div>';
+            return '<div ' . implode(' ', $wrapperClassStyle) . '><div ' . implode(' ', $wrapperInnerClassStyle) . '>' . $embedCode . '</div></div>';
         }
         return '';
     }
@@ -309,14 +308,14 @@ class Video
             'top' => '0',
             'left' => '0',
             'width' => '100%',
-            'height' => '100%'
+            'height' => '100%',
         ];
     }
 
     public function implodeStyles(array $styles): string
     {
         $styleString = '';
-        foreach($styles as $key => $value) {
+        foreach ($styles as $key => $value) {
             $styleString .= $key . ':' . $value . ';';
         }
         return $styleString;
@@ -562,5 +561,4 @@ class Video
     {
         return $this->html();
     }
-
 }

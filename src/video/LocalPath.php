@@ -2,9 +2,6 @@
 
 namespace solvras\craftvideotoolkit\video;
 
-use craft\elements\Asset;
-use solvras\craftvideotoolkit\video\Video;
-
 class LocalPath extends Video
 {
     public function __construct(string $videoPath, array $options = [])
@@ -16,6 +13,4 @@ class LocalPath extends Video
         $this->setEmbedUrl($videoPath);
         $this->setEmbedCode($this->getVideoTag());
     }
-
-
 }

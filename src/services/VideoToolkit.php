@@ -2,7 +2,6 @@
 
 namespace solvras\craftvideotoolkit\services;
 
-use Craft;
 use craft\elements\Asset;
 use solvras\craftvideotoolkit\video\AssetVideo;
 use solvras\craftvideotoolkit\video\LocalPath;
@@ -61,7 +60,7 @@ class VideoToolkit extends Component
     {
         if ($url instanceof Asset) {
             return 'localAsset';
-        }elseif ($this->isUrl($url)) {
+        } elseif ($this->isUrl($url)) {
             if (str_contains($url, 'youtu')) {
                 return 'youtube';
             } elseif (str_contains($url, 'vimeo')) {

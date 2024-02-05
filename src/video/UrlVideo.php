@@ -2,9 +2,6 @@
 
 namespace solvras\craftvideotoolkit\video;
 
-use craft\elements\Asset;
-use solvras\craftvideotoolkit\video\Video;
-
 class UrlVideo extends Video
 {
     public function __construct(string $videoUrl, array $options = [])
@@ -16,6 +13,4 @@ class UrlVideo extends Video
         $this->setEmbedUrl($videoUrl);
         $this->setEmbedCode($this->getVideoTag());
     }
-
-
 }

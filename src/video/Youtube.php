@@ -11,7 +11,7 @@ class Youtube extends Video
         $this->setOembedData($this->getProviderData());
         $this->setId($this->getYoutubeId());
         $this->setRatio($this->calculateRatio());
-        if(!$this->getThumbnailUrl()) {
+        if (!$this->getThumbnailUrl()) {
             $this->setThumbnailUrl($this->getYoutubeThumbnailUrl());
         }
         $this->setEmbedUrl($this->generateEmbedUrl());
@@ -30,7 +30,7 @@ class Youtube extends Video
 
     public function generateEmbedUrl(): string // @TODO this is using default getter method, should we use a custom method?
     {
-        if($this->getNoCookie()) {
+        if ($this->getNoCookie()) {
             $embedUrl = 'https://www.youtube-nocookie.com/embed/';
         } else {
             $embedUrl = 'https://www.youtube.com/embed/';
@@ -44,20 +44,20 @@ class Youtube extends Video
     public function getUrlParams(): string
     {
         $paramsArray = [];
-        if($this->getMuted()) {
-            $paramsArray = array_merge($paramsArray, ['mute' =>'1']);
+        if ($this->getMuted()) {
+            $paramsArray = array_merge($paramsArray, ['mute' => '1']);
         }
-        if($this->getAutoplay()) {
-            $paramsArray = array_merge($paramsArray, ['autoplay' =>'1']);
-            $paramsArray = array_merge($paramsArray, ['mute' =>'1']);
+        if ($this->getAutoplay()) {
+            $paramsArray = array_merge($paramsArray, ['autoplay' => '1']);
+            $paramsArray = array_merge($paramsArray, ['mute' => '1']);
         }
-        if($this->getLoop()) {
-            $paramsArray = array_merge($paramsArray, ['loop' =>'1']);
+        if ($this->getLoop()) {
+            $paramsArray = array_merge($paramsArray, ['loop' => '1']);
         }
-        if(!$this->getControls()) {
-            $paramsArray = array_merge($paramsArray, ['controls' =>'0']);
+        if (!$this->getControls()) {
+            $paramsArray = array_merge($paramsArray, ['controls' => '0']);
         }
-        $paramsArray = array_merge($paramsArray, ['rel' =>'0']);
+        $paramsArray = array_merge($paramsArray, ['rel' => '0']);
         return http_build_query($paramsArray);
     }
 
@@ -65,5 +65,4 @@ class Youtube extends Video
     {
         return $this->getOembedData()->thumbnail_url;
     }
-
 }
