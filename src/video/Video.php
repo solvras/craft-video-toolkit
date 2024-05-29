@@ -44,6 +44,7 @@ class Video
     ];
     public function __construct(string $url, array $options = [])
     {
+        $this->setEmbedCode('');
         $this->setUrl($url);
         $this->setOptions($options);
     }
@@ -81,7 +82,11 @@ class Video
     {
         if ($oembedUrl = $this->getProviderOembedUrl()) {
             $oembedUrl .= $this->url;
-            return json_decode(file_get_contents($oembedUrl));
+            try {
+                return json_decode(file_get_contents($oembedUrl));
+            } catch (\Exception $e) {
+                return false;
+            }
         }
         return false;
     }

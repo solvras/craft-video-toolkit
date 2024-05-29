@@ -10,14 +10,16 @@ class Vimeo extends Video
         parent::__construct($url, $options);
         $this->setKind('vimeo');
         $this->setOembedData($this->getProviderData());
-        $this->setId($this->getVimeoId());
-        $this->setPrivateId($this->getVimeoPrivateId());
-        $this->setRatio($this->calculateRatio());
-        if (!$this->getThumbnailUrl()) {
-            $this->setThumbnailUrl($this->getVimeoThumbnailUrl());
+        if($this->getOembedData()) {
+            $this->setId($this->getVimeoId());
+            $this->setPrivateId($this->getVimeoPrivateId());
+            $this->setRatio($this->calculateRatio());
+            if (!$this->getThumbnailUrl()) {
+                $this->setThumbnailUrl($this->getVimeoThumbnailUrl());
+            }
+            $this->setEmbedUrl($this->generateEmbedUrl());
+            $this->setEmbedCode($this->getVideoEmbedCode());
         }
-        $this->setEmbedUrl($this->generateEmbedUrl());
-        $this->setEmbedCode($this->getVideoEmbedCode());
     }
 
     public function getVimeoId(): string|bool

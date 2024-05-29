@@ -41,7 +41,7 @@ class VideoToolkit extends Component
                 //echo 'no video';
                 break;
         }
-        if ($video instanceof Video) {
+        if ($video instanceof Video && $video->getEmbedCode()) {
             return $video;
         }
 
