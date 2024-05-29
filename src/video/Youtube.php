@@ -9,13 +9,15 @@ class Youtube extends Video
         parent::__construct($url, $options);
         $this->setKind('youtube');
         $this->setOembedData($this->getProviderData());
-        $this->setId($this->getYoutubeId());
-        $this->setRatio($this->calculateRatio());
-        if (!$this->getThumbnailUrl()) {
-            $this->setThumbnailUrl($this->getYoutubeThumbnailUrl());
+        if($this->getOembedData()) {
+            $this->setId($this->getYoutubeId());
+            $this->setRatio($this->calculateRatio());
+            if (!$this->getThumbnailUrl()) {
+                $this->setThumbnailUrl($this->getYoutubeThumbnailUrl());
+            }
+            $this->setEmbedUrl($this->generateEmbedUrl());
+            $this->setEmbedCode($this->getVideoEmbedCode());
         }
-        $this->setEmbedUrl($this->generateEmbedUrl());
-        $this->setEmbedCode($this->getVideoEmbedCode());
     }
 
     public function getYoutubeId(): string|bool
