@@ -75,7 +75,7 @@ class Vimeo extends Video
 
     public function getVimeoThumbnailUrl(): string
     {
-        return $this->getOembedData()->thumbnail_url;
+        return $this->getOembedData()->thumbnail_url ?? '';
     }
 
     public function getPrivateId(): string
